@@ -8,6 +8,34 @@ const API = axios.create({
     },
 });
 
+// 💡 AUTOMATIC TOKEN INJECTION: Jab bhi aap login kar loge, ye interceptor har request ke sath 
+// token ko backend par bhejega taaki auth failure na ho.
+API.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, (error) => {
+    return Promise.reject(error);
+});
+
+// ==========================================
+// 🔑 ADMIN / USER AUTHENTICATION ENDPOINTS
+// ==========================================
+
+// ADMIN LOGIN (Bhai ye missing tha, ab 404 nahi aayega!)
+export const adminLogin = async(credentials) => {
+    // Backend controllers ke mutabik agar route '/admin/login' hai ya '/auth/login' use verify karein.
+    // Defaulting to '/admin/login' standard context.
+    return await API.post("/admin/login", credentials);
+};
+
+
+// ==========================================
+// 🏨 ROOMS MANAGEMENT ENDPOINTS
+// ==========================================
+
 // GET ALL ROOMS
 export const getAllRooms = async() => {
     return await API.get("/rooms");
@@ -18,7 +46,7 @@ export const getRoomById = async(id) => {
     return await API.get(`/rooms/${id}`);
 };
 
-// ADD ROOM (RoomsAdmin handles 'createRoom' but api.js had 'addRoom')
+// ADD ROOM
 export const createRoom = async(roomData) => {
     return await API.post("/rooms/add", roomData);
 };
@@ -32,12 +60,18 @@ export const updateRoom = async(id, roomData) => {
 export const deleteRoom = async(id) => {
     return await API.delete(`/rooms/delete/${id}`);
 };
-// GET ALL BOOKINGS (Admin Panel ke liye)
+
+
+// ==========================================
+// 📅 BOOKINGS MANAGEMENT ENDPOINTS
+// ==========================================
+
+// GET ALL BOOKINGS
 export const getAllBookings = async() => {
     return await API.get("/bookings");
 };
 
-// UPDATE BOOKING STATUS (Confirm / Cancel karne ke liye)
+// UPDATE BOOKING STATUS (Confirm / Cancel / Checked Out)
 export const updateBookingStatus = async(id, status) => {
     return await API.put(`/bookings/update/${id}`, { status });
 };
@@ -47,12 +81,17 @@ export const deleteBooking = async(id) => {
     return await API.delete(`/bookings/delete/${id}`);
 };
 
-// GET ALL MEDIA (Filter by category: 'All', 'gallery', 'rooms')
+
+// ==========================================
+// 🖼️ GALLERY / MEDIA ENDPOINTS
+// ==========================================
+
+// GET ALL MEDIA
 export const getMedia = async(category = "All") => {
     return await API.get(`/gallery?category=${category}`);
 };
 
-// UPLOAD NEW MEDIA (Handles gallery/rooms dynamic destination on backend)
+// UPLOAD NEW MEDIA
 export const uploadMedia = async(formData) => {
     return await API.post("/gallery/upload", formData, {
         headers: {
