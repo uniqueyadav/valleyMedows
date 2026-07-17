@@ -331,7 +331,7 @@ export default function AddRoom() {
               Connecting & Creating Room in Database...
             </>
           ) : (
-            "Save Room to Happy Haven System"
+            "Save Room "
           )}
         </button>
       </form>

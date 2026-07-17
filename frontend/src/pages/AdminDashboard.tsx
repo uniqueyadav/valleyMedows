@@ -13,7 +13,7 @@ export default function AdminDashboard() {
 
   // 1. Session Token Validation Verification
   useEffect(() => {
-    document.title = "Admin — Valley Meadows";
+    document.title = "Admin — Valley Medows";
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/adminlogin", { replace: true });

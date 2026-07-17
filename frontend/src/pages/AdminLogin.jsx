@@ -34,7 +34,7 @@ const AdminLogin = () => {
     <div className="admin-login-page">
       <div className="admin-container">
         <div className="login-card">
-          <h1>Valley Meadows</h1>
+          <h1>Valley Medows</h1>
           <h2>Admin Login</h2>
           <p>Welcome Back Admin</p>
 

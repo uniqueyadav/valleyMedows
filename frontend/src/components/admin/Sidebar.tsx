@@ -29,7 +29,7 @@ export default function Sidebar() {
       <div>
         {/* Logo Section */}
         <div className="p-6 border-b border-slate-700">
-          <h1 className="text-3xl font-bold text-purple-400">Valley Meadows</h1>
+          <h1 className="text-3xl font-bold text-purple-400">Valley Medows</h1>
           <p className="text-sm text-slate-400 mt-1">Admin Panel</p>
         </div>
 

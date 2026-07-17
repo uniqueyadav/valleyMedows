@@ -161,7 +161,7 @@ export default function RoomManagement() {
       {/* Header section */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Happy Haven Rooms Registry</h1>
+          <h1 className="text-2xl font-bold text-gray-800"> Rooms Registry</h1>
           <p className="text-sm text-gray-500">Monitor availability statuses, details, records modification</p>
         </div>
         <Link to="/admin/add-rooms" className="bg-indigo-600 hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] text-white px-4 py-2 rounded-lg flex items-center font-medium shadow-md hover:shadow-lg transition-all duration-200">
