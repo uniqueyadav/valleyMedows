@@ -22,7 +22,7 @@ export function Gallery() {
 
   // Backend response format ke mutabik data extract kar rahe hain
   const images: GalleryItem[] = responseData?.data?.data || [];
-  const BACKEND_BASE = "http://localhost:5000";
+  const BACKEND_BASE = "https://valleymedows.onrender.com";
 
   return (
     <section id="gallery" className="py-10 md:py-12 bg-background">

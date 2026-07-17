@@ -37,7 +37,7 @@ export default function AdminDashboard() {
     queryKey: ["adminTotalRoomsMetrics"],
     queryFn: async () => {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/rooms", {
+      const response = await axios.get("https://valleymedows.onrender.com/api/rooms", {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response;

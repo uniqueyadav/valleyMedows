@@ -69,7 +69,7 @@ export function BookingForm() {
       };
 
       // YAHAN BADLA HAI: PHP URL ko hatakar aapke Node.js local port routing se connect kiya hai
-      const res = await fetch("http://localhost:5000/api/bookings/add", {
+      const res = await fetch("https://valleymedows.onrender.com/api/bookings/add", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json", 
