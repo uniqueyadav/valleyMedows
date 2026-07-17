@@ -146,7 +146,7 @@ export function GalleryManagement() {
     }
   };
 
-  const BACKEND_BASE = "https://valleymedows.onrender.com/";
+  const BACKEND_BASE = "https://valleymedows.onrender.com";
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 bg-gradient-to-br from-background via-background to-secondary/10 min-h-screen">
