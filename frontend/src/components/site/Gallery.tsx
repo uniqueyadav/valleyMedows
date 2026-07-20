@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-// Bhai dynamic backend connectivity ke liye direct getMedia ko import kiya hai
-import { getMedia } from "@/service/api"; 
+// 💡 getMedia ke sath BACKEND_URL ko bhee import kar liya
+import { getMedia, BACKEND_URL } from "@/service/api"; 
 import { Skeleton } from "@/components/ui/skeleton";
 import { SectionHeader } from "./Rooms";
 
@@ -14,15 +14,12 @@ interface GalleryItem {
 }
 
 export function Gallery() {
-  // 1. Database se sifr 'gallery' category ka data fetch kar rahe hain
   const { data: responseData, isLoading } = useQuery({ 
     queryKey: ["mainSiteGallery"], 
-    queryFn: () => getMedia("gallery") // Admin jo uploads/gallery me dalega wahi aayega
+    queryFn: () => getMedia("gallery") 
   });
 
-  // Backend response format ke mutabik data extract kar rahe hain
   const images: GalleryItem[] = responseData?.data?.data || [];
-  const BACKEND_BASE = "https://valleymedows.onrender.com";
 
   return (
     <section id="gallery" className="py-10 md:py-12 bg-background">
@@ -33,10 +30,10 @@ export function Gallery() {
           {isLoading
             ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="aspect-square rounded-xl" />)
             : images.map((img, i) => {
-                // Agar URL pure absolute path (http) nahi hai toh backend base URL append karein
+                // 💡 Global BACKEND_URL se static variable replace ho gaya hai
                 const fullImageUrl = img.imageUrl.startsWith("http") 
                   ? img.imageUrl 
-                  : `${BACKEND_BASE}${img.imageUrl}`;
+                  : `${BACKEND_URL}${img.imageUrl}`;
 
                 return (
                   <div 

@@ -40,8 +40,9 @@ const bookingSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["Pending", "Confirmed", "Cancelled"],
-        default: "Pending",
+        // 👇 Status ko standardized lowercase me rakha taaki validation fail na ho
+        enum: ["pending", "confirmed", "checked-out", "cancelled"],
+        default: "pending",
     },
 }, { timestamps: true });
 

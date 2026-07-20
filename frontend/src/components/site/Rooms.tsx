@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Users, Check, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
-import { getAllRooms } from "@/service/api"; // Aapki dynamic api.js file se function import kiya
+import { getAllRooms } from "@/service/api"; 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
@@ -20,17 +20,22 @@ interface DatabaseRoom {
 }
 
 export function Rooms() {
-  // Yahan humne aapka axios wala `getAllRooms` bind kar diya hai
   const { data: responseData, isLoading, error } = useQuery({ 
     queryKey: ["rooms"], 
     queryFn: getAllRooms 
   });
 
-  // Axios response me data `.data` ke andar hota hai, aur agar backend structure me `.rooms` hai to dono handles standard hain
-  const rooms: DatabaseRoom[] = responseData?.data?.rooms || responseData?.data || [];
+  // Safe nested scenarios extract
+  const rawData = responseData?.data?.rooms || responseData?.data || responseData?.rooms || responseData || [];
 
-  // Filter: Jo 2 active rooms admin ne add kiye hain sirf vahi dikhenge
+  // Strict Array Check
+  const rooms: DatabaseRoom[] = Array.isArray(rawData) 
+    ? rawData 
+    : (rawData && typeof rawData === "object" ? (rawData.rooms || Object.values(rawData).find(Array.isArray) || []) : []);
+
+  // Filter Active/Available rooms safely
   const activeRooms = rooms.filter((room) => {
+    if (!room) return false;
     const currentStatus = String(room.status || "").toLowerCase();
     return currentStatus === "available" || currentStatus === "active";
   });

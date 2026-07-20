@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getAllRooms } from "@/service/api"; // Sahi API path
+// 💡 Axios function wrapper ko sahi tarike se use karne ke liye import kiya
+import { getAllRooms, createBooking } from "@/service/api"; 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { z } from "zod";
-import { CalendarCheck } from "lucide-react";
+import { CalendarCheck, Loader2 } from "lucide-react"; 
 import { SectionHeader } from "./Rooms";
 
-// Database Room Type Definition
 interface DatabaseRoom {
   _id: string;
   roomName: string;
@@ -29,7 +29,8 @@ const schema = z.object({
 });
 
 export function BookingForm() {
-  const { data: responseData } = useQuery({ 
+  // Rooms dynamic fetching with TanStack Query
+  const { data: responseData, isLoading } = useQuery({ 
     queryKey: ["rooms"], 
     queryFn: getAllRooms 
   });
@@ -68,27 +69,18 @@ export function BookingForm() {
         message: form.message.trim(),
       };
 
-      // YAHAN BADLA HAI: PHP URL ko hatakar aapke Node.js local port routing se connect kiya hai
-      const res = await fetch("https://valleymedows.onrender.com/api/bookings/add", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          "Accept": "application/json" 
-        },
-        body: JSON.stringify(payload),
-      });
+      // 💡 Native fetch directly bypass karke standard Axios helper wrapper implementation kiya
+      const res = await createBooking(payload);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || `Request failed (${res.status})`);
+      if (res.data && res.data.success) {
+        toast.success("Booking request saved in database successfully!");
+        setForm({ name: "", phone: "", email: "", check_in: "", check_out: "", guests: 2, room_preference: "", message: "" });
       }
-
-      toast.success("Booking request saved in database successfully!");
-      setForm({ name: "", phone: "", email: "", check_in: "", check_out: "", guests: 2, room_preference: "", message: "" });
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Could not save booking. Please try again.");
+      // 💡 Global unified Axios handling parameters parse kiya
+      const errMsg = err.response?.data?.message || err.message || "Could not save booking. Please try again.";
+      toast.error(errMsg);
     } finally {
       setSubmitting(false);
     }
@@ -128,21 +120,36 @@ export function BookingForm() {
               required
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option value="">-- Choose a room option --</option>
-              <option value="Any available room">Any available room</option>
-              {activeRooms.map((r) => (
-                <option key={r._id} value={r.roomName}>
-                  {r.roomName}
-                </option>
-              ))}
+              {isLoading ? (
+                <option value="">Loading rooms...</option>
+              ) : (
+                <>
+                  <option value="">-- Choose a room option --</option>
+                  <option value="Any available room">Any available room</option>
+                  {activeRooms.map((r) => (
+                    <option key={r._id} value={r.roomName}>
+                      {r.roomName}
+                    </option>
+                  ))}
+                </>
+              )}
             </select>
           </Field>
           <Field label="Message / Special Requests">
             <Textarea rows={4} value={form.message} maxLength={1000} onChange={(e) => setForm({ ...form, message: e.target.value })} />
           </Field>
           <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-            <CalendarCheck className="w-4 h-4 mr-2" />
-            {submitting ? "Sending..." : "Request Booking"}
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                <CalendarCheck className="w-4 h-4 mr-2" />
+                Request Booking
+              </>
+            )}
           </Button>
         </form>
       </div>

@@ -19,7 +19,7 @@ interface Booking {
   guests: number;
   room_preference: string;
   message?: string;
-  status: "Pending" | "Confirmed" | "Cancelled";
+  status: "pending" | "confirmed" | "cancelled" | "checked-out"; // 💡 Lowercase strings
   createdAt: string;
 }
 
@@ -29,7 +29,7 @@ export function BookingManagement() {
   const [statusFilter, setStatusFilter] = useState("All");
 
   // Fetching live data via Axios api
-  const { data: responseData, isLoading, error, refetch } = useQuery({
+  const { data: responseData, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ["adminBookings"],
     queryFn: getAllBookings,
   });
@@ -58,17 +58,21 @@ export function BookingManagement() {
 
   // Filters & Search logic
   const filteredBookings = bookings.filter((b) => {
-    const matchesSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          b.phone.includes(searchTerm) || 
-                          b.room_preference.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "All" || b.status === statusFilter;
+    const matchesSearch = 
+      (b.name || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (b.phone || "").includes(searchTerm) || 
+      (b.room_preference || "").toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // 💡 Backend se safe match ke liye lowercase check lagaya hai
+    const matchesStatus = statusFilter === "All" || b.status?.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
 
   // Counters
   const total = bookings.length;
-  const pending = bookings.filter(b => b.status === "Pending").length;
-  const confirmed = bookings.filter(b => b.status === "Confirmed").length;
+  // 💡 FIX 1: lowercase strings se filter kiya
+  const pending = bookings.filter(b => b.status?.toLowerCase() === "pending").length;
+  const confirmed = bookings.filter(b => b.status?.toLowerCase() === "confirmed").length;
 
   if (isLoading) {
     return (
@@ -81,7 +85,7 @@ export function BookingManagement() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-md rounded-2xl border border-rose-500/20 bg-rose-500/5 p-6 text-center shadow-2xl backdrop-blur-md">
+      <div className="mx-auto max-w-md rounded-2xl border border-rose-500/20 bg-rose-500/5 p-6 text-center shadow-2xl backdrop-blur-md mt-20">
         <AlertCircle className="mx-auto h-12 w-12 text-rose-500 mb-3 animate-bounce" />
         <h3 className="text-lg font-bold text-foreground">Database Connection Failed</h3>
         <p className="text-muted-foreground text-sm mt-1">Bhai backend server ya network configurations check karo.</p>
@@ -108,9 +112,11 @@ export function BookingManagement() {
             refetch();
             toast.info("Database matrix re-synchronized!");
           }} 
-          className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-600/10 hover:shadow-xl hover:shadow-indigo-600/20 transition-all duration-300 transform hover:-translate-y-0.5"
+          disabled={isRefetching}
+          className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-600/10 hover:shadow-xl hover:shadow-indigo-600/20 transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <RefreshCw className="h-4 w-4" /> Refresh System Matrix
+          <RefreshCw className={`h-4 w-4 ${isRefetching ? "animate-spin" : ""}`} /> 
+          <span>{isRefetching ? "Synchronizing..." : "Refresh System Matrix"}</span>
         </button>
       </div>
 
@@ -179,9 +185,9 @@ export function BookingManagement() {
             className="w-full sm:w-48 bg-background border border-border/70 rounded-xl px-4 py-2.5 text-sm font-semibold text-foreground/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
           >
             <option value="All">All Categories</option>
-            <option value="Pending">Status: Pending</option>
-            <option value="Confirmed">Status: Confirmed</option>
-            <option value="Cancelled">Status: Cancelled</option>
+            <option value="pending">Status: Pending</option>
+            <option value="confirmed">Status: Confirmed</option>
+            <option value="cancelled">Status: Cancelled</option>
           </select>
         </div>
       </div>
@@ -198,7 +204,6 @@ export function BookingManagement() {
               key={b._id} 
               className="group bg-card border rounded-3xl p-6 transition-all duration-300 relative flex flex-col justify-between hover:shadow-2xl hover:border-indigo-500/40 hover:bg-gradient-to-b hover:from-card hover:to-secondary/10 overflow-hidden"
             >
-              {/* Dynamic Neon Background Glow on Hover */}
               <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-indigo-500/5 to-purple-500/0 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
               <div>
@@ -212,9 +217,10 @@ export function BookingManagement() {
                       UUID: {b._id}
                     </span>
                   </div>
+                  {/* 💡 FIX 2: Badge checks lowercased */}
                   <span className={`px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm border ${
-                    b.status === "Confirmed" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20" :
-                    b.status === "Cancelled" ? "bg-rose-500/10 text-rose-500 border-rose-500/20 dark:bg-rose-500/20" :
+                    b.status?.toLowerCase() === "confirmed" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20" :
+                    b.status?.toLowerCase() === "cancelled" ? "bg-rose-500/10 text-rose-500 border-rose-500/20 dark:bg-rose-500/20" :
                     "bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse dark:bg-amber-500/20"
                   }`}>
                     {b.status}
@@ -266,23 +272,26 @@ export function BookingManagement() {
               {/* Action Rows */}
               <div className="mt-6 pt-4 border-t border-border/60 flex flex-wrap justify-between items-center gap-4">
                 <span className="text-[11px] text-muted-foreground/80 font-semibold">
-                  Logs In: {new Date(b.createdAt).toLocaleString("en-IN", {hour: '2-digit', minute:'2-digit', day:'numeric', month:'short'})}
+                  Logs In: {b.createdAt ? new Date(b.createdAt).toLocaleString("en-IN", {hour: '2-digit', minute:'2-digit', day:'numeric', month:'short'}) : "N/A"}
                 </span>
                 
                 {/* Premium Glow Action Buttons Control */}
                 <div className="flex items-center gap-2">
-                  {b.status === "Pending" && (
+                  {/* 💡 FIX 3: Lowercase comparison strictly with backend data, dynamic lowercase values for API payload */}
+                  {b.status?.toLowerCase() === "pending" && (
                     <>
                       <button 
-                        onClick={() => statusMutation.mutate({ id: b._id, status: "Confirmed" })}
-                        className="p-2.5 bg-emerald-500/10 text-emerald-600 rounded-xl border border-emerald-500/20 hover:bg-emerald-600 hover:text-white hover:shadow-lg hover:shadow-emerald-600/30 transition-all duration-300 transform hover:scale-105"
+                        onClick={() => statusMutation.mutate({ id: b._id, status: "confirmed" })}
+                        disabled={statusMutation.isPending || deleteMutation.isPending}
+                        className="p-2.5 bg-emerald-500/10 text-emerald-600 rounded-xl border border-emerald-500/20 hover:bg-emerald-600 hover:text-white hover:shadow-lg hover:shadow-emerald-600/30 transition-all duration-300 transform scale-100 hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
                         title="Confirm Booking"
                       >
                         <CheckCircle className="w-4 h-4 stroke-[2.5]" />
                       </button>
                       <button 
-                        onClick={() => statusMutation.mutate({ id: b._id, status: "Cancelled" })}
-                        className="p-2.5 bg-amber-500/10 text-amber-600 rounded-xl border border-amber-500/20 hover:bg-amber-600 hover:text-white hover:shadow-lg hover:shadow-amber-600/30 transition-all duration-300 transform hover:scale-105"
+                        onClick={() => statusMutation.mutate({ id: b._id, status: "cancelled" })}
+                        disabled={statusMutation.isPending || deleteMutation.isPending}
+                        className="p-2.5 bg-amber-500/10 text-amber-600 rounded-xl border border-amber-500/20 hover:bg-amber-600 hover:text-white hover:shadow-lg hover:shadow-amber-600/30 transition-all duration-300 transform scale-100 hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
                         title="Cancel Booking"
                       >
                         <XCircle className="w-4 h-4 stroke-[2.5]" />
@@ -295,7 +304,8 @@ export function BookingManagement() {
                         deleteMutation.mutate(b._id);
                       }
                     }}
-                    className="p-2.5 bg-rose-500/10 text-rose-600 rounded-xl border border-rose-500/20 hover:bg-rose-600 hover:text-white hover:shadow-lg hover:shadow-rose-600/30 transition-all duration-300 transform hover:scale-105"
+                    disabled={statusMutation.isPending || deleteMutation.isPending}
+                    className="p-2.5 bg-rose-500/10 text-rose-600 rounded-xl border border-rose-500/20 hover:bg-rose-600 hover:text-white hover:shadow-lg hover:shadow-rose-600/30 transition-all duration-300 transform scale-100 hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
                     title="Delete Permanently"
                   >
                     <Trash2 className="w-4 h-4 stroke-[2.5]" />

@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-// Bhai dynamic data flow ke liye 'getAllRooms' ko import matrix me add kar diya hai
-import { getMedia, uploadMedia, deleteMedia, getAllRooms } from "@/service/api"; 
+// 💡 BACKEND_URL ko yahan import kiya hai
+import { getMedia, uploadMedia, deleteMedia, getAllRooms, BACKEND_URL } from "@/service/api"; 
 import { 
   Image, UploadCloud, Trash2, LayoutGrid, 
   RefreshCw, Loader2, FileImage, Info,
-  AlertTriangle, CheckCircle2, Eye, BedDouble
+  AlertTriangle, CheckCircle2, Eye
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +29,15 @@ export function GalleryManagement() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Clean memory leaks from ObjectURLs safely
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   // 1. Fetch Gallery Media Layer
   const { data: mediaResponse, isLoading: isMediaLoading, error: mediaError, refetch: refetchMedia } = useQuery({
     queryKey: ["adminMedia", activeTab],
@@ -39,14 +48,13 @@ export function GalleryManagement() {
   const { data: roomsResponse, isLoading: isRoomsLoading, error: roomsError, refetch: refetchRooms } = useQuery({
     queryKey: ["adminRoomsData"],
     queryFn: getAllRooms,
-    // Optimal Strategy: Jab 'All' ya 'rooms' tab active ho, tabhi background me rooms query fire hogi
     enabled: activeTab === "All" || activeTab === "rooms", 
   });
 
   const rawGalleryItems = mediaResponse?.data?.data || [];
   const rawRoomsItems = roomsResponse?.data?.data || [];
 
-  // Data Normalization Layer: Dono collections ko standard format me fusion pipeline me daal rahe hain
+  // Data Normalization Layer
   let mediaItems: MediaItem[] = [];
 
   // Step A: Parse and Push normal gallery items
@@ -69,7 +77,6 @@ export function GalleryManagement() {
       if (room.images && Array.isArray(room.images)) {
         room.images.forEach((imgUrl: string, index: number) => {
           mediaItems.push({
-            // Dynamic index combined key to keep mapping react key clean
             _id: `room-${room._id}-${index}`, 
             title: room.name || `Room Space Asset`,
             category: "rooms",
@@ -90,6 +97,7 @@ export function GalleryManagement() {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(URL.createObjectURL(selectedFile));
     }
   };
@@ -116,8 +124,7 @@ export function GalleryManagement() {
       return toast.info("Bhai, Rooms images system direct Room Management panel se control hota hai!");
     }
     if (!file) return toast.warning("Bhai, file attach karo pehle.");
-    if (!title.trim()) return toast.warning("Bhai, asset title blank nahi ho sakta.");
-
+    
     setIsUploading(true);
     const formData = new FormData();
     formData.append("image", file);
@@ -133,6 +140,7 @@ export function GalleryManagement() {
     onSuccess: (res) => {
       toast.success(res.data?.message || "Asset deleted permanently.");
       queryClient.invalidateQueries({ queryKey: ["adminMedia"] });
+      queryClient.invalidateQueries({ queryKey: ["adminRoomsData"] });
     },
     onError: () => toast.error("Asset matrix clean down pipeline failed.")
   });
@@ -145,8 +153,6 @@ export function GalleryManagement() {
       deleteMutation.mutate(id);
     }
   };
-
-  const BACKEND_BASE = "https://valleymedows.onrender.com";
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 bg-gradient-to-br from-background via-background to-secondary/10 min-h-screen">
@@ -198,13 +204,13 @@ export function GalleryManagement() {
 
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-2">Target Storage Folder</label>
-              <select
-                value={category}
+              <select 
+                value={category} 
                 onChange={(e) => setCategory(e.target.value as "gallery" | "rooms")}
-                className="w-full bg-background border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all text-foreground"
+                className="w-full bg-background border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all text-foreground"
               >
-                <option value="gallery">📂 Folder: uploads/gallery</option>
-                
+                <option value="gallery">Gallery Storage Panel</option>
+                <option value="rooms">Rooms Vector DB</option>
               </select>
             </div>
 
@@ -281,7 +287,7 @@ export function GalleryManagement() {
               >
                 {tab === "All" && "🌌 All Vaults"}
                 {tab === "gallery" && "🖼️ Gallery Asset"}
-                
+                {tab === "rooms" && "🛏️ Room Images"}
               </button>
             ))}
           </div>
@@ -328,14 +334,14 @@ export function GalleryManagement() {
                   {/* Multimedia Rendering Canvas Area */}
                   <div className="relative aspect-video w-full overflow-hidden bg-secondary">
                     <img 
-                      src={item.imageUrl.startsWith("http") ? item.imageUrl : `${BACKEND_BASE}${item.imageUrl}`} 
+                      src={item.imageUrl.startsWith("http") ? item.imageUrl : `${BACKEND_URL}${item.imageUrl}`} 
                       alt={item.title} 
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
                       <a 
-                        href={item.imageUrl.startsWith("http") ? item.imageUrl : `${BACKEND_BASE}${item.imageUrl}`} 
+                        href={item.imageUrl.startsWith("http") ? item.imageUrl : `${BACKEND_URL}${item.imageUrl}`} 
                         target="_blank" 
                         rel="noreferrer"
                         className="p-2.5 bg-white/20 hover:bg-white/40 text-white rounded-xl backdrop-blur-md transition-all transform scale-90 group-hover:scale-100"
