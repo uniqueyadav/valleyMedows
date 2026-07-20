@@ -10,8 +10,8 @@ import io from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
 
 // Backend Server Connection Setup (Apne running Port string se update karein)
-// const SOCKET_SERVER_URL = "https://valleymedows.onrender.com";
-const SOCKET_SERVER_URL = "http://localhost:5000";
+const SOCKET_SERVER_URL = "https://valleymedows.onrender.com";
+// const SOCKET_SERVER_URL = "http://localhost:5000";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
