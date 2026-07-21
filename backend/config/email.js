@@ -1,25 +1,30 @@
 const nodemailer = require("nodemailer");
-require("dotenv").config(); // 👈 Ye line yahan zaroor honi chahiye!
+require("dotenv").config();
 
-// Ek baar check karne ke liye console log lagate hain ki values aa bhi rahi hain ya nahi
-console.log("Checking Email Config -> USER:", process.env.EMAIL_USER, "| PASS Key Available:", !!process.env.EMAIL_PASS);
+console.log(
+    "Checking Email Config -> USER:",
+    process.env.EMAIL_USER,
+    "| PASS Key Available:", !!process.env.EMAIL_PASS
+);
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
     host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // true for 587, false for other ports
-    requireTLS: true,
+    port: 465,
+    secure: true, // Port 465 ke liye SSL enable
     auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        pass: process.env.EMAIL_PASS, // Google 16-digit App Password
     },
+    // Cloud environment mein hanging rokne ke liye timeouts
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
 });
 
-// Transporter verify test
-transporter.verify((error, success) => {
+transporter.verify((error) => {
     if (error) {
-        console.log("❌ Nodemailer Setup Failed:", error.message);
+        console.error("❌ Nodemailer Setup Error:", error.message);
     } else {
         console.log("✅ Nodemailer ready to send emails!");
     }
